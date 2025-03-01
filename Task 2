@@ -1,0 +1,17 @@
+try:
+    time.sleep(5) 
+    try:
+        agree_btn = driver.find_element_by_id("com.android.packageinstaller:id/permission_allow_button")
+        agree_btn.click()
+    except:
+        pass
+    forecast_tab = driver.find_element_by_xpath("//*[contains(@text, '9-Day Forecast')]")
+    forecast_tab.click()
+    time.sleep(3)
+    date_element = driver.find_element_by_xpath(
+        "(//*[contains(@resource-id, 'forecast_date')])[1]")
+    displayed_date = date_element.text
+    expected_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    assert displayed_date == expected_date, \
+        f"displayed date：{displayed_date}，expected date：{expected_date}"
+    driver.quit()
