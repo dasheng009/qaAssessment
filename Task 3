@@ -1,0 +1,52 @@
+from json import loads
+from unittest import TestCase
+import requests
+
+
+class Test(TestCase):
+    def test_api_request(self):
+        base_url = "https://www.szse.cn/api/report/ShowReport/data?"
+        params = {
+            "SHOWTYPE": "JSON",
+            "CATALOGID": "1394_stock_snapshot",
+            "code": "000001",
+            "loading": "first",
+            "random": "0.6728714117002061"
+        }
+        url = base_url + "&".join(f"{key}={value}" for key, value in params.items())
+
+        try:
+            response = requests.get(url, timeout=10)
+        except requests.exceptions.RequestException as e:
+            pytest.fail(f"request fail: {e}")
+        assert response.status_code == 200, f"request respond fail: {response.status_code}"
+
+        try:
+            response_data = loads(response.text)
+        except JSONDecodeError:
+            pytest.fail("wrong json format")
+
+        assert isinstance(response_data, list) and len(response_data) > 0, "respond structure wrong"
+        data_block = response_data[0]
+
+        assert 'data' in data_block, "data missing 'data'"
+
+        #print("data block", data_block)
+        data_content = data_block['data']
+
+        cols = data_block['metadata']['cols']
+
+        #print("data content", data_content[0])
+
+        #print("cols", cols)
+
+        try:
+            high_value = float(data_content[0]['zg'])
+            low_value = float(data_content[0]['zd'])
+            high_name = cols['zg']
+            low_name = cols['zd']
+
+        except (IndexError, ValueError, TypeError) as e:
+            pytest.fail(f"convert fail: {e}")
+
+        assert high_value > low_value, f"{high_name}({high_value}) is greater than {low_name}({low_value})"
